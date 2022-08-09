@@ -1,9 +1,7 @@
-import { InMemoryCache } from "apollo-cache-inmemory";
-import { ApolloClient } from "apollo-client";
-import { ApolloLink } from "apollo-link";
-import { setContext } from "apollo-link-context";
-import { HttpLink } from "apollo-link-http";
-import { onError } from "apollo-link-error";
+
+import {  HttpLink, ApolloLink, ApolloClient, InMemoryCache } from "@apollo/client";
+import { setContext } from "@apollo/client/link/context";
+import { onError } from "@apollo/client/link/error";
 import produce from "immer";
 
 const errorLink = onError(({ graphQLErrors, networkError, operation }) => {

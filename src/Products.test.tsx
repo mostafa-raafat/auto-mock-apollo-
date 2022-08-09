@@ -1,22 +1,20 @@
 import React from "react";
-import { MockedProvider } from "react-apollo/test-utils";
-import { render, cleanup } from "react-testing-library";
-import { MockList } from "graphql-tools";
+import { MockedProvider } from "@apollo/client/testing";
+import { MockList } from "@graphql-tools/mock";
+import "@testing-library/jest-dom/extend-expect";
+import { render } from "@testing-library/react";
 import faker from "faker";
-import "jest-dom/extend-expect";
 import { ImageContentType } from "./generated/globalTypes";
 import AutoMockedProvider from "./utils/AutoMockedProvider";
 import Products, { PRODUCTS_QUERY } from "./Products";
-
-afterEach(cleanup);
 
 const mocks = [
   {
     request: {
       query: PRODUCTS_QUERY,
       variables: {
-        preferredContentType: ImageContentType.JPG
-      }
+        preferredContentType: ImageContentType.JPG,
+      },
     },
     result: {
       data: {
@@ -31,18 +29,18 @@ const mocks = [
                     {
                       node: {
                         id: "456",
-                        transformedSrc: "https://www.images.com/shoe.jpg"
-                      }
-                    }
-                  ]
-                }
-              }
-            }
-          ]
-        }
-      }
-    }
-  }
+                        transformedSrc: "https://www.images.com/shoe.jpg",
+                      },
+                    },
+                  ],
+                },
+              },
+            },
+          ],
+        },
+      },
+    },
+  },
 ];
 
 it("renders with MockedProvider", async () => {
@@ -59,18 +57,18 @@ it("renders with MockedProvider", async () => {
 });
 
 it("renders with AutoMockedProvider", async () => {
-  const mockResolvers = {
+  const mockResolvers = (store: any) => ({
     Product: () => ({
       title: "Nike Shoes",
       images: () => ({
-        edges: () => new MockList([0, 3])
-      })
+        edges: () => new MockList([0, 3]),
+      }),
     }),
     Image: () => ({
       transformedSrc: (_: any, { preferredContentType }: any) =>
-        `https://images.com/cat.${preferredContentType.toLowerCase()}`
-    })
-  };
+        `https://images.com/cat.${preferredContentType.toLowerCase()}`,
+    }),
+  });
 
   const { findByText, getByText } = render(
     <AutoMockedProvider mockResolvers={mockResolvers}>
@@ -87,13 +85,13 @@ it("renders with AutoMockedProvider", async () => {
 it("matches snapshot using seeds", async () => {
   faker.seed(123);
 
+  const mockResolvers = (store: any) => ({
+    URL: () => "https://www.shopify.com",
+    ID: () => faker.random.uuid(),
+  });
+
   const { findByTestId, asFragment } = render(
-    <AutoMockedProvider
-      mockResolvers={{
-        URL: () => "https://www.shopify.com",
-        ID: () => faker.random.uuid()
-      }}
-    >
+    <AutoMockedProvider mockResolvers={mockResolvers}>
       <Products />
     </AutoMockedProvider>
   );

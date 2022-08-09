@@ -1,40 +1,43 @@
 import React, { ReactNode } from "react";
-import { ApolloProvider } from "react-apollo";
-import { ApolloClient } from "apollo-client";
-import { InMemoryCache } from "apollo-cache-inmemory";
-import { SchemaLink } from "apollo-link-schema";
+import { ApolloClient, InMemoryCache, ApolloProvider } from "@apollo/client";
+import { SchemaLink } from "@apollo/client/link/schema";
+
 import {
+  addResolversToSchema,
   makeExecutableSchema,
-  addMockFunctionsToSchema,
-  IMocks
-} from "graphql-tools";
-import { printSchema, buildClientSchema } from "graphql/utilities";
-import introspectionResult from "../../schema.json";
+} from "@graphql-tools/schema";
+
+import { addMocksToSchema } from "@graphql-tools/mock";
+
+import { buildClientSchema } from "graphql/utilities";
+import * as introspectionResult from "../../schema.json";
 
 const AutoMockedProvider: React.FunctionComponent<{
   children: ReactNode;
-  mockResolvers?: IMocks;
+  mockResolvers?: any;
 }> = ({ children, mockResolvers }) => {
   // 1) Convert JSON schema into Schema Definition Language
-  const schemaSDL = printSchema(
-    buildClientSchema({ __schema: introspectionResult.__schema as any })
-  );
-
-  // 2) Make schema "executable"
-  const schema = makeExecutableSchema({
-    typeDefs: schemaSDL,
-    resolverValidationOptions: {
-      requireResolversForResolveType: false
-    }
+  const schemaSDL = buildClientSchema({
+    __schema: introspectionResult.__schema as any,
   });
 
+  // 2) Make schema "executable"
+  let schema = makeExecutableSchema({
+    typeDefs: schemaSDL,
+    resolverValidationOptions: {
+      requireResolversForResolveType: "ignore",
+    },
+  });
+
+  schema = addResolversToSchema(schema, mockResolvers);
+
   // 3) Apply mock resolvers to executable schema
-  addMockFunctionsToSchema({ schema, mocks: mockResolvers });
+  addMocksToSchema({ schema, preserveResolvers: false });
 
   // 4) Define ApolloClient (client variable used below)
   const client = new ApolloClient({
     link: new SchemaLink({ schema }),
-    cache: new InMemoryCache()
+    cache: new InMemoryCache(),
   });
 
   return <ApolloProvider client={client}>{children}</ApolloProvider>;
